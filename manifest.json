@@ -1,0 +1,11 @@
+{
+  "name": "store_google_play",
+  "displayName": "Google Play",
+  "version": "0.1.0",
+  "author": "AdamFull",
+  "description": "Google Play Billing storefront backend.",
+  "license": null,
+  "created": "2026-09-12",
+  "repository": null,
+  "revision": null
+}
