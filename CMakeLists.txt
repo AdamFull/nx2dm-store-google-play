@@ -24,10 +24,18 @@ endif ()
 # (modules/store_google_play/android/java/com/nx2d/runtime/
 # NxGooglePlayBilling.kt, picked up by that same build script's per-module
 # source-dir loop). This CMakeLists.txt only builds the C++ side of the JNI
-# boundary.
+# boundary. Play Games Services (achievements/cloud saves/leaderboards) is
+# a second, independent Google framework covered by this same module - its
+# own Kotlin shim (NxPlayGamesServices.kt) and Gradle dependency follow the
+# exact same shape, one Maven coordinate added alongside Play Billing's own
+# in this module's android/build.gradle.kts.
 nx_module(store_google_play
         DISPLAY "Google Play Billing storefront backend"
         SOURCES store_google_play_module.cpp store_google_play_platform.cpp
                 store_google_play_services.cpp
+                store_google_play_gamesservices_platform.cpp
+                store_google_play_gamesservices_services.cpp
+                store_google_play_gamesservices_leaderboards.cpp
+                store_google_play_gamesservices_scripting.cpp
         DEPENDS nx_module_store nx::sdl
         PLATFORMS android)

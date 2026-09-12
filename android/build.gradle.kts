@@ -16,6 +16,15 @@
 // when store_google_play is actually enabled, so a build without the
 // module carries no Billing Library code or its manifest-merged
 // com.android.vending.BILLING permission at all.
+//
+// play-services-games-v2 is Play Games Services' own plain public Maven
+// coordinate (a second, independent Google framework this module also
+// covers - see NxPlayGamesServices.kt) - it resolves from the same
+// google() repo already serving com.android.billingclient here and
+// com.google.android.gms:play-services-tasks in :app's own
+// build.gradle.kts, so no AGConnect-style extra repo wiring is needed the
+// way store_app_gallery's Huawei dependency requires.
 dependencies {
     "implementation"("com.android.billingclient:billing:9.1.0")
+    "implementation"("com.google.android.gms:play-services-games-v2:22.0.0")
 }
