@@ -43,8 +43,10 @@ public:
   /// Fires `NxGooglePlayBilling.queryPurchases()` - Play Billing has no
   /// separate ownership concept from purchase state, an unconsumed
   /// PURCHASED-state INAPP product IS the entitlement, refreshing
-  /// owned_dlc_ids().
-  void refresh_ownership();
+  /// owned_dlc_ids(). @p dlc_id is ignored, same as
+  /// store::StoreCore::refresh_ownership() documents for any bulk-capable
+  /// backend.
+  void refresh_ownership(nx::string_view dlc_id = {}) override;
 
   static void dispatch_purchases_queried(jint response_code,
                                          jobjectArray product_ids);
@@ -76,7 +78,7 @@ public:
   /// given - unlike Steam/EGS, Play Billing has no "list everything"
   /// query, the game must know its own product ids up front (the same
   /// limitation GOG Galaxy's DLC-ownership check already has).
-  void refresh_products(const nx::vector<nx::string> &product_ids);
+  void refresh_products(const nx::vector<nx::string> &product_ids) override;
 
   static void dispatch_product_details_response(jint response_code,
                                                  jobjectArray product_ids,

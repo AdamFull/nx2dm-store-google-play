@@ -60,7 +60,7 @@ bool GooglePlayCore::is_owned(const nx::string_view dlc_id) const {
   return false;
 }
 
-void GooglePlayCore::refresh_ownership() {
+void GooglePlayCore::refresh_ownership(const nx::string_view) {
   if (!m_platform.ready())
     return;
   const nx::android::JniScope env(m_platform.vm());
