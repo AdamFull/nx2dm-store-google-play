@@ -12,7 +12,8 @@ endif ()
 # reaching that gate, the same "skipped on <platform>" outcome
 # _nx_module_gate would otherwise report.
 if (NOT ANDROID)
-    message(STATUS "nx2d: module 'store_google_play' skipped on this platform")
+    _nx_current_platform(_here)
+    _nx_module_skip_platform(store_google_play "${_here}")
     return()
 endif ()
 
