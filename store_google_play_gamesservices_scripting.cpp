@@ -3,7 +3,7 @@
 #include "store_google_play/store_google_play_gamesservices_leaderboards.h"
 #include "store_google_play/store_google_play_gamesservices_platform.h"
 
-#include "core/script/script_host.h"
+#include "script/script_host.h"
 
 namespace nxm::store_google_play {
 

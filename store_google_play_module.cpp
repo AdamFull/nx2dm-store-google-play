@@ -7,9 +7,9 @@
 
 #include "store/store_service.h"
 
-#include "core/app/engine.h"
-#include "core/app/module_system/module.h"
-#include "core/app/module_system/module_context.h"
+#include "app/engine.h"
+#include "app/module_system/module.h"
+#include "app/module_system/module_context.h"
 
 #include "core/foundation/diagnostics/log.h"
 
