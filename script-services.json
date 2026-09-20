@@ -1,4 +1,7 @@
 {
+  "platforms": [
+    "android"
+  ],
   "services": [
     {
       "name": "store_google_play_sign_in",
