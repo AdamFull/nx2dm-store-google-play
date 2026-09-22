@@ -32,6 +32,10 @@
       "signature": "()->(boolean)"
     },
     {
+      "name": "store_google_play_leaderboard_entries",
+      "signature": "()->({{rank: number, score: number, name: string}})"
+    },
+    {
       "name": "store_google_play_leaderboard_entry_count",
       "signature": "()->(number)"
     },

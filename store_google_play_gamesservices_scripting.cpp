@@ -7,6 +7,17 @@
 
 namespace nxm::store_google_play {
 
+namespace {
+
+/// One leaderboard row as a script reads it.
+struct LeaderboardEntry {
+  f64 rank = 0.0;
+  f64 score = 0.0;
+  nx::string_view name;
+};
+
+}
+
 void expose_store_google_play_extras(nxe::script::Host &host, PlayGamesPlatform &platform,
                                      PlayGamesLeaderboards &leaderboards) {
   // -- Sign-in ------------------------------------------------------------
@@ -33,6 +44,15 @@ void expose_store_google_play_extras(nxe::script::Host &host, PlayGamesPlatform 
                  });
   host.expose_as("store_google_play_leaderboard_download_pending", [&leaderboards]() {
     return leaderboards.download_pending();
+  });
+  host.expose_as("store_google_play_leaderboard_entries", [&leaderboards] {
+    nx::vector<LeaderboardEntry> out;
+    out.reserve(leaderboards.entry_count());
+    for (usize i = 0; i < leaderboards.entry_count(); ++i)
+      out.push_back({static_cast<f64>(leaderboards.entry_rank(i)),
+                     static_cast<f64>(leaderboards.entry_score(i)),
+                     leaderboards.entry_name(i)});
+    return out;
   });
   host.expose_as("store_google_play_leaderboard_entry_count", [&leaderboards]() {
     return static_cast<f64>(leaderboards.entry_count());
