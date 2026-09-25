@@ -45,23 +45,27 @@ PlayGamesAchievements::PlayGamesAchievements(PlayGamesPlatform &platform) noexce
 bool PlayGamesAchievements::unlock(const nx::string_view id) {
   if (!m_platform.authenticated())
     return false;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return false;
-  const jstring jid = nx::android::to_jstring(env.get(), id);
-  if (jid == nullptr)
-    return false;
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jstring jid = nx::android::to_jstring(env.get(), id);
+        if (jid == nullptr)
+          return false;
 
-  jvalue args[2];
-  args[0].l = m_platform.activity();
-  args[1].l = jid;
-  call_shim_static_void(env.get(), "unlockAchievement",
-                        "(Landroid/app/Activity;Ljava/lang/String;)V", args);
-  env->DeleteLocalRef(jid);
+        jvalue args[2];
+        args[0].l = m_platform.activity();
+        args[1].l = jid;
+        call_shim_static_void(env.get(), "unlockAchievement",
+                              "(Landroid/app/Activity;Ljava/lang/String;)V",
+                              args);
+        env->DeleteLocalRef(jid);
 
-  const std::lock_guard lock(m_mutex);
-  m_unlocked_ids.emplace_back(id);
-  return true;
+        const std::lock_guard lock(m_mutex);
+        m_unlocked_ids.emplace_back(id);
+        return true;
+      });
 }
 
 bool PlayGamesAchievements::is_unlocked(const nx::string_view id) const {
@@ -80,12 +84,16 @@ nx::vector<nx::string> PlayGamesAchievements::achievement_ids() const {
 void PlayGamesAchievements::refresh(const nx::vector<nx::string> &) {
   if (!m_platform.authenticated())
     return;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return;
-  jvalue args[1];
-  args[0].l = m_platform.activity();
-  call_shim_static_void(env.get(), "loadAchievements", "(Landroid/app/Activity;)V", args);
+  nx::android::run_java(m_platform.threads(), m_platform.vm(),
+                        [&](const nx::android::JniScope &env) {
+                          if (!env)
+                            return;
+                          jvalue args[1];
+                          args[0].l = m_platform.activity();
+                          call_shim_static_void(env.get(), "loadAchievements",
+                                                "(Landroid/app/Activity;)V",
+                                                args);
+                        });
 }
 
 void PlayGamesAchievements::on_achievements_loaded(const jobjectArray ids,
@@ -119,49 +127,57 @@ PlayGamesCloudSaves::PlayGamesCloudSaves(PlayGamesPlatform &platform) noexcept
 bool PlayGamesCloudSaves::write(const nx::string_view key, const nx::string_view value) {
   if (!m_platform.authenticated())
     return false;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return false;
-  const jstring name = nx::android::to_jstring(env.get(), key);
-  const jbyteArray data = nx::android::to_jbyte_array(env.get(), value);
-  if (name == nullptr || data == nullptr) {
-    if (name != nullptr)
-      env->DeleteLocalRef(name);
-    if (data != nullptr)
-      env->DeleteLocalRef(data);
-    return false;
-  }
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jstring name = nx::android::to_jstring(env.get(), key);
+        const jbyteArray data = nx::android::to_jbyte_array(env.get(), value);
+        if (name == nullptr || data == nullptr) {
+          if (name != nullptr)
+            env->DeleteLocalRef(name);
+          if (data != nullptr)
+            env->DeleteLocalRef(data);
+          return false;
+        }
 
-  jvalue args[3];
-  args[0].l = m_platform.activity();
-  args[1].l = name;
-  args[2].l = data;
-  call_shim_static_void(env.get(), "writeSnapshot",
-                        "(Landroid/app/Activity;Ljava/lang/String;[B)V", args);
-  env->DeleteLocalRef(name);
-  env->DeleteLocalRef(data);
-  return true;
+        jvalue args[3];
+        args[0].l = m_platform.activity();
+        args[1].l = name;
+        args[2].l = data;
+        call_shim_static_void(env.get(), "writeSnapshot",
+                              "(Landroid/app/Activity;Ljava/lang/String;[B)V",
+                              args);
+        env->DeleteLocalRef(name);
+        env->DeleteLocalRef(data);
+        return true;
+      });
 }
 
 nx::string PlayGamesCloudSaves::read(const nx::string_view key) const {
   if (!m_platform.authenticated())
     return {};
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return {};
-  const jstring name = nx::android::to_jstring(env.get(), key);
-  if (name == nullptr)
-    return {};
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> nx::string {
+        if (!env)
+          return {};
+        const jstring name = nx::android::to_jstring(env.get(), key);
+        if (name == nullptr)
+          return {};
 
-  jvalue args[2];
-  args[0].l = m_platform.activity();
-  args[1].l = name;
-  call_shim_static_void(env.get(), "readSnapshot",
-                        "(Landroid/app/Activity;Ljava/lang/String;)V", args);
-  env->DeleteLocalRef(name);
+        jvalue args[2];
+        args[0].l = m_platform.activity();
+        args[1].l = name;
+        call_shim_static_void(env.get(), "readSnapshot",
+                              "(Landroid/app/Activity;Ljava/lang/String;)V",
+                              args);
+        env->DeleteLocalRef(name);
 
-  const std::lock_guard lock(m_mutex);
-  return m_read_buffer;
+        const std::lock_guard lock(m_mutex);
+        return m_read_buffer;
+      });
 }
 
 bool PlayGamesCloudSaves::exists(const nx::string_view key) const {
@@ -175,20 +191,24 @@ bool PlayGamesCloudSaves::exists(const nx::string_view key) const {
 bool PlayGamesCloudSaves::remove(const nx::string_view key) {
   if (!m_platform.authenticated())
     return false;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return false;
-  const jstring name = nx::android::to_jstring(env.get(), key);
-  if (name == nullptr)
-    return false;
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jstring name = nx::android::to_jstring(env.get(), key);
+        if (name == nullptr)
+          return false;
 
-  jvalue args[2];
-  args[0].l = m_platform.activity();
-  args[1].l = name;
-  call_shim_static_void(env.get(), "deleteSnapshot",
-                        "(Landroid/app/Activity;Ljava/lang/String;)V", args);
-  env->DeleteLocalRef(name);
-  return true;
+        jvalue args[2];
+        args[0].l = m_platform.activity();
+        args[1].l = name;
+        call_shim_static_void(env.get(), "deleteSnapshot",
+                              "(Landroid/app/Activity;Ljava/lang/String;)V",
+                              args);
+        env->DeleteLocalRef(name);
+        return true;
+      });
 }
 
 nx::vector<nx::string> PlayGamesCloudSaves::keys() const {
@@ -199,12 +219,16 @@ nx::vector<nx::string> PlayGamesCloudSaves::keys() const {
 void PlayGamesCloudSaves::refresh_keys() {
   if (!m_platform.authenticated())
     return;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return;
-  jvalue args[1];
-  args[0].l = m_platform.activity();
-  call_shim_static_void(env.get(), "loadSnapshotMetadata", "(Landroid/app/Activity;)V", args);
+  nx::android::run_java(m_platform.threads(), m_platform.vm(),
+                        [&](const nx::android::JniScope &env) {
+                          if (!env)
+                            return;
+                          jvalue args[1];
+                          args[0].l = m_platform.activity();
+                          call_shim_static_void(
+                              env.get(), "loadSnapshotMetadata",
+                              "(Landroid/app/Activity;)V", args);
+                        });
 }
 
 void PlayGamesCloudSaves::on_snapshot_written(const jstring name, const jboolean success) {

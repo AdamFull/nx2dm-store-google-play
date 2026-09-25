@@ -69,38 +69,41 @@ bool PlayGamesPlatform::initialize() {
 void PlayGamesPlatform::shutdown() {
   if (m_vm == nullptr)
     return;
-  const nx::android::JniScope env(m_vm);
-  if (env && m_activity != nullptr)
-    env->DeleteGlobalRef(m_activity);
-  m_activity = nullptr;
-  m_vm = nullptr;
-  m_sign_in_pending = false;
-  m_authenticated = false;
-  if (s_instance == this)
-    s_instance = nullptr;
+  nx::android::run_java(m_threads, m_vm, [&](const nx::android::JniScope &env) {
+    if (env && m_activity != nullptr)
+      env->DeleteGlobalRef(m_activity);
+    m_activity = nullptr;
+    m_vm = nullptr;
+    m_sign_in_pending = false;
+    m_authenticated = false;
+    if (s_instance == this)
+      s_instance = nullptr;
+  });
 }
 
 bool PlayGamesPlatform::sign_in() {
   if (m_vm == nullptr || m_activity == nullptr)
     return false;
-  const nx::android::JniScope env(m_vm);
-  if (!env)
-    return false;
-  const jclass shim = find_games_services_shim_class(env.get());
-  if (shim == nullptr)
-    return false;
-  const jmethodID sign_in_method = nx::android::static_method(
-      env.get(), shim, "signIn", "(Landroid/app/Activity;)V");
-  if (sign_in_method == nullptr) {
-    env->DeleteLocalRef(shim);
-    return false;
-  }
-  m_sign_in_pending = true;
-  env->CallStaticVoidMethod(shim, sign_in_method, m_activity);
-  if (env->ExceptionCheck())
-    env->ExceptionClear();
-  env->DeleteLocalRef(shim);
-  return true;
+  return nx::android::run_java(
+      m_threads, m_vm, [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jclass shim = find_games_services_shim_class(env.get());
+        if (shim == nullptr)
+          return false;
+        const jmethodID sign_in_method = nx::android::static_method(
+            env.get(), shim, "signIn", "(Landroid/app/Activity;)V");
+        if (sign_in_method == nullptr) {
+          env->DeleteLocalRef(shim);
+          return false;
+        }
+        m_sign_in_pending = true;
+        env->CallStaticVoidMethod(shim, sign_in_method, m_activity);
+        if (env->ExceptionCheck())
+          env->ExceptionClear();
+        env->DeleteLocalRef(shim);
+        return true;
+      });
 }
 
 void PlayGamesPlatform::on_sign_in_result(const jboolean authenticated) {

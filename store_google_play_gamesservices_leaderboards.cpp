@@ -39,26 +39,30 @@ bool PlayGamesLeaderboards::submit_score(const nx::string_view leaderboard_id,
                                          const i64 score) {
   if (!m_platform.authenticated())
     return false;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return false;
-  const jstring id = nx::android::to_jstring(env.get(), leaderboard_id);
-  if (id == nullptr)
-    return false;
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jstring id = nx::android::to_jstring(env.get(), leaderboard_id);
+        if (id == nullptr)
+          return false;
 
-  {
-    const std::lock_guard lock(m_mutex);
-    m_submit_pending = true;
-  }
+        {
+          const std::lock_guard lock(m_mutex);
+          m_submit_pending = true;
+        }
 
-  jvalue args[3];
-  args[0].l = m_platform.activity();
-  args[1].l = id;
-  args[2].j = static_cast<jlong>(score);
-  call_shim_static_void(env.get(), "submitScore",
-                        "(Landroid/app/Activity;Ljava/lang/String;J)V", args);
-  env->DeleteLocalRef(id);
-  return true;
+        jvalue args[3];
+        args[0].l = m_platform.activity();
+        args[1].l = id;
+        args[2].j = static_cast<jlong>(score);
+        call_shim_static_void(env.get(), "submitScore",
+                              "(Landroid/app/Activity;Ljava/lang/String;J)V",
+                              args);
+        env->DeleteLocalRef(id);
+        return true;
+      });
 }
 
 bool PlayGamesLeaderboards::submit_pending() const noexcept {
@@ -69,25 +73,29 @@ bool PlayGamesLeaderboards::submit_pending() const noexcept {
 bool PlayGamesLeaderboards::download(const nx::string_view leaderboard_id) {
   if (!m_platform.authenticated())
     return false;
-  const nx::android::JniScope env(m_platform.vm());
-  if (!env)
-    return false;
-  const jstring id = nx::android::to_jstring(env.get(), leaderboard_id);
-  if (id == nullptr)
-    return false;
+  return nx::android::run_java(
+      m_platform.threads(), m_platform.vm(),
+      [&](const nx::android::JniScope &env) -> bool {
+        if (!env)
+          return false;
+        const jstring id = nx::android::to_jstring(env.get(), leaderboard_id);
+        if (id == nullptr)
+          return false;
 
-  {
-    const std::lock_guard lock(m_mutex);
-    m_download_pending = true;
-  }
+        {
+          const std::lock_guard lock(m_mutex);
+          m_download_pending = true;
+        }
 
-  jvalue args[2];
-  args[0].l = m_platform.activity();
-  args[1].l = id;
-  call_shim_static_void(env.get(), "loadTopScores",
-                        "(Landroid/app/Activity;Ljava/lang/String;)V", args);
-  env->DeleteLocalRef(id);
-  return true;
+        jvalue args[2];
+        args[0].l = m_platform.activity();
+        args[1].l = id;
+        call_shim_static_void(env.get(), "loadTopScores",
+                              "(Landroid/app/Activity;Ljava/lang/String;)V",
+                              args);
+        env->DeleteLocalRef(id);
+        return true;
+      });
 }
 
 bool PlayGamesLeaderboards::download_pending() const noexcept {

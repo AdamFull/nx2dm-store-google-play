@@ -12,6 +12,7 @@
 #include "app/module_system/module_context.h"
 
 #include "core/foundation/diagnostics/log.h"
+#include "core/foundation/threading/thread_pool.h"
 
 namespace nxm::store_google_play {
 namespace {
@@ -64,7 +65,9 @@ public:
                               PROVIDED_SERVICES[3].version, cloud_saves);
   }
 
-  bool on_attach(nxe::ModuleContext &) override {
+  bool on_attach(nxe::ModuleContext &ctx) override {
+    m_platform.set_threads(&ctx.threads());
+    m_play_games_platform.set_threads(&ctx.threads());
     // No pump system registered here, unlike the desktop backends - every
     // Play Billing call resolves through the Java shim's own callbacks,
     // dispatched by the Android runtime itself (see
@@ -74,7 +77,9 @@ public:
     // BillingClient resolves everything from the installed Play Store
     // client and the app's own package/signing, matching
     // store_microsoft's own "nothing here to configure" shape.
-    if (m_platform.initialize())
+    bool billing = false;
+    ctx.threads().run_on_main([&] { billing = m_platform.initialize(); });
+    if (billing)
       nx::logi(log_store_google_play, "attached, connecting to Play Billing");
     else
       nx::logi(log_store_google_play, "no Android activity available; staying idle");
@@ -82,7 +87,8 @@ public:
     // Play Games Services is a second, independent framework - its own
     // readiness (sign-in state) has nothing to do with Play Billing's
     // above (see store_google_play_gamesservices_platform.h).
-    m_play_games_platform.initialize();
+    ctx.threads().run_on_main(
+        [&] { (void)m_play_games_platform.initialize(); });
     return true;
   }
 

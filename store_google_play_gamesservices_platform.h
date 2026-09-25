@@ -5,6 +5,10 @@
 
 #include <jni.h>
 
+namespace nx {
+class thread_pool;
+}
+
 namespace nxm::store_google_play {
 
 /// Looks up `com.nx2d.runtime.NxPlayGamesServices` - shared by this
@@ -47,6 +51,9 @@ public:
   [[nodiscard]] bool authenticated() const noexcept { return m_authenticated; }
 
   [[nodiscard]] JavaVM *vm() const noexcept { return m_vm; }
+  /// The pool whose main thread runs the Java calls made from its jobs.
+  void set_threads(nx::thread_pool *threads) noexcept { m_threads = threads; }
+  [[nodiscard]] nx::thread_pool *threads() const noexcept { return m_threads; }
   /// A global ref on the Android `Activity` SDL created this process with -
   /// every `NxPlayGamesServices` call needs one, the same
   /// `PlayGames.getXClient(activity)` shape throughout Google's own API.
@@ -61,6 +68,7 @@ private:
   void on_sign_in_result(jboolean authenticated);
 
   JavaVM *m_vm = nullptr;
+  nx::thread_pool *m_threads = nullptr;
   jobject m_activity = nullptr;
   bool m_sign_in_pending = false;
   bool m_authenticated = false;
