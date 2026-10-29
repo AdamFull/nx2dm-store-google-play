@@ -4,8 +4,8 @@
 
 #include "store/store_service.h"
 
+#include "core/foundation/threading/sync.h"
 #include <jni.h>
-#include <mutex>
 
 namespace nxm::store_google_play {
 
@@ -60,7 +60,7 @@ private:
   void on_achievements_loaded(jobjectArray ids, jobjectArray unlocked_ids);
 
   PlayGamesPlatform &m_platform;
-  mutable std::mutex m_mutex;
+  mutable nx::mutex m_mutex;
   nx::vector<nx::string> m_achievement_ids;
   nx::vector<nx::string> m_unlocked_ids;
 
@@ -109,7 +109,7 @@ private:
   void on_snapshot_metadata_loaded(jobjectArray names);
 
   PlayGamesPlatform &m_platform;
-  mutable std::mutex m_mutex;
+  mutable nx::mutex m_mutex;
   nx::vector<nx::string> m_keys;
   nx::string m_read_buffer;
 

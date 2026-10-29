@@ -49,7 +49,7 @@ bool PlayGamesLeaderboards::submit_score(const nx::string_view leaderboard_id,
           return false;
 
         {
-          const std::lock_guard lock(m_mutex);
+          const nx::scoped_lock lock(m_mutex);
           m_submit_pending = true;
         }
 
@@ -66,7 +66,7 @@ bool PlayGamesLeaderboards::submit_score(const nx::string_view leaderboard_id,
 }
 
 bool PlayGamesLeaderboards::submit_pending() const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return m_submit_pending;
 }
 
@@ -83,7 +83,7 @@ bool PlayGamesLeaderboards::download(const nx::string_view leaderboard_id) {
           return false;
 
         {
-          const std::lock_guard lock(m_mutex);
+          const nx::scoped_lock lock(m_mutex);
           m_download_pending = true;
         }
 
@@ -99,32 +99,32 @@ bool PlayGamesLeaderboards::download(const nx::string_view leaderboard_id) {
 }
 
 bool PlayGamesLeaderboards::download_pending() const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return m_download_pending;
 }
 
 usize PlayGamesLeaderboards::entry_count() const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return m_entries.size();
 }
 
 i64 PlayGamesLeaderboards::entry_rank(const usize index) const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return index < m_entries.size() ? m_entries[index].rank : 0;
 }
 
 i64 PlayGamesLeaderboards::entry_score(const usize index) const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return index < m_entries.size() ? m_entries[index].score : 0;
 }
 
 nx::string_view PlayGamesLeaderboards::entry_name(const usize index) const noexcept {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return index < m_entries.size() ? m_entries[index].name.view() : nx::string_view{};
 }
 
 void PlayGamesLeaderboards::on_score_submitted(const jboolean) {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   m_submit_pending = false;
 }
 
@@ -149,7 +149,7 @@ void PlayGamesLeaderboards::on_leaderboard_loaded(const jlongArray ranks,
     entries.push_back(std::move(entry));
   }
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   m_download_pending = false;
   m_entries = std::move(entries);
 }

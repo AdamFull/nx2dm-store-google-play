@@ -5,8 +5,8 @@
 #include "core/foundation/core/foundation.h"
 #include "core/foundation/strings/utf8_string.h"
 
+#include "core/foundation/threading/sync.h"
 #include <jni.h>
-#include <mutex>
 
 namespace nxm::store_google_play {
 
@@ -41,7 +41,7 @@ private:
   void on_leaderboard_loaded(jlongArray ranks, jlongArray scores, jobjectArray names);
 
   PlayGamesPlatform &m_platform;
-  mutable std::mutex m_mutex;
+  mutable nx::mutex m_mutex;
   bool m_submit_pending = false;
   bool m_download_pending = false;
 

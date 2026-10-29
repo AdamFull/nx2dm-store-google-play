@@ -62,14 +62,14 @@ bool PlayGamesAchievements::unlock(const nx::string_view id) {
                               args);
         env->DeleteLocalRef(jid);
 
-        const std::lock_guard lock(m_mutex);
+        const nx::scoped_lock lock(m_mutex);
         m_unlocked_ids.emplace_back(id);
         return true;
       });
 }
 
 bool PlayGamesAchievements::is_unlocked(const nx::string_view id) const {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   for (const nx::string &unlocked : m_unlocked_ids)
     if (unlocked.view() == id)
       return true;
@@ -77,7 +77,7 @@ bool PlayGamesAchievements::is_unlocked(const nx::string_view id) const {
 }
 
 nx::vector<nx::string> PlayGamesAchievements::achievement_ids() const {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return m_achievement_ids;
 }
 
@@ -104,7 +104,7 @@ void PlayGamesAchievements::on_achievements_loaded(const jobjectArray ids,
   nx::vector<nx::string> all_ids = nx::android::to_nx_string_vector(env.get(), ids);
   nx::vector<nx::string> unlocked = nx::android::to_nx_string_vector(env.get(), unlocked_ids);
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   m_achievement_ids = std::move(all_ids);
   m_unlocked_ids = std::move(unlocked);
 }
@@ -175,13 +175,13 @@ nx::string PlayGamesCloudSaves::read(const nx::string_view key) const {
                               args);
         env->DeleteLocalRef(name);
 
-        const std::lock_guard lock(m_mutex);
+        const nx::scoped_lock lock(m_mutex);
         return m_read_buffer;
       });
 }
 
 bool PlayGamesCloudSaves::exists(const nx::string_view key) const {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   for (const nx::string &existing : m_keys)
     if (existing.view() == key)
       return true;
@@ -212,7 +212,7 @@ bool PlayGamesCloudSaves::remove(const nx::string_view key) {
 }
 
 nx::vector<nx::string> PlayGamesCloudSaves::keys() const {
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   return m_keys;
 }
 
@@ -239,7 +239,7 @@ void PlayGamesCloudSaves::on_snapshot_written(const jstring name, const jboolean
     return;
   const nx::string key = nx::android::to_nx_string(env.get(), name);
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   for (const nx::string &existing : m_keys)
     if (existing.view() == key.view())
       return;
@@ -255,7 +255,7 @@ void PlayGamesCloudSaves::on_snapshot_read(const jstring, const jbyteArray data)
   // already documents.
   nx::string bytes = nx::android::to_nx_bytes(env.get(), data);
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   m_read_buffer = std::move(bytes);
 }
 
@@ -267,7 +267,7 @@ void PlayGamesCloudSaves::on_snapshot_deleted(const jstring name, const jboolean
     return;
   const nx::string key = nx::android::to_nx_string(env.get(), name);
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   for (usize i = 0; i < m_keys.size(); ++i) {
     if (m_keys[i].view() == key.view()) {
       m_keys.erase(m_keys.begin() + static_cast<isize>(i));
@@ -282,7 +282,7 @@ void PlayGamesCloudSaves::on_snapshot_metadata_loaded(const jobjectArray names) 
     return;
   nx::vector<nx::string> keys = nx::android::to_nx_string_vector(env.get(), names);
 
-  const std::lock_guard lock(m_mutex);
+  const nx::scoped_lock lock(m_mutex);
   m_keys = std::move(keys);
 }
 
